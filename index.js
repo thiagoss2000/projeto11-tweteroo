@@ -1,4 +1,4 @@
-import express, { json, request, response } from "express";
+import express, { json, query, request, response } from "express";
 import cors from "cors";
 
 let dadosUser = [];
@@ -85,7 +85,7 @@ app.post("/tweets", (request, response) => {
     }
     const user = dadosUser[dadosUser.findIndex((el) => el.username == userName)];
     if(user != undefined){
-        tweets.push({
+        tweets.unshift({
         username: user.username,
         avatar: user.avatar,
         tweet: body.tweet
@@ -97,15 +97,25 @@ app.post("/tweets", (request, response) => {
 })
 
 app.get("/tweets", (request, response) => {
-    let newTweets = [...tweets];
-    newTweets.splice(0, (tweets.length > 10 ? tweets.length - 10 : 0));
-    response.send(newTweets);
+    const { query } = request
+    const page = (query.page != undefined? (query.page -1) *10 : 0 );
+    if(tweets.length > page){
+        let newTweets = [];
+        tweets.forEach((el, i) => {
+            if(i >= page && i < (page +10)){
+                newTweets.push(el);
+            }
+        })
+        response.status(200).send(newTweets);
+    }else{
+        response.status(400).end();
+    }
 })
 
 app.get("/tweets/:username", (request, response) => {
     const userName = request.params.username;
     let newTweets = tweets.filter((el) => el.username == userName);
-    response.send(newTweets);
+    response.status(200).send(newTweets);
 })
 
 app.listen(5000, () => {
